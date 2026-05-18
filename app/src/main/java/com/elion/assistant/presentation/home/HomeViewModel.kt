@@ -104,4 +104,16 @@ class HomeViewModel @Inject constructor(
             taskRepository.deleteTask(task)
         }
     }
+
+    fun addQuickTask(title: String, categoryId: Long?) {
+        viewModelScope.launch {
+            val task = Task(
+                title = title,
+                categoryId = categoryId,
+                dueDate = LocalDate.now(),
+                createdAt = java.time.LocalDateTime.now()
+            )
+            taskRepository.insertTask(task)
+        }
+    }
 }

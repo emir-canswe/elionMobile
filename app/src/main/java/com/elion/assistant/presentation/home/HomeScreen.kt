@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -33,6 +34,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showQuickAddDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -73,7 +75,23 @@ fun HomeScreen(
             }
 
             item {
+                DailyAIQuoteCard()
+            }
+
+            item {
                 ProgressRow(uiState.completedCount, uiState.totalCount, uiState.completionPercentage)
+            }
+
+            item {
+                AiBatteryCard(uiState.completionPercentage)
+            }
+
+            item {
+                QuickActionsGrid(
+                    onNavigateToVoice = onNavigateToVoice,
+                    onNavigateToTasks = onNavigateToTasks,
+                    onAddQuickTask = { showQuickAddDialog = true }
+                )
             }
 
             if (uiState.postponeAlerts.isNotEmpty()) {
@@ -124,6 +142,75 @@ fun HomeScreen(
                 StreakCard(uiState.currentStreak, uiState.longestStreak)
             }
         }
+    }
+
+    if (showQuickAddDialog) {
+        var taskTitle by remember { mutableStateOf("") }
+        var selectedCategory by remember { mutableStateOf(uiState.categories.firstOrNull()) }
+
+        AlertDialog(
+            onDismissRequest = { showQuickAddDialog = false },
+            title = { Text("Hızlı Görev Ekle", style = AppTypography.titleLarge, color = TextPrimary) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = taskTitle,
+                        onValueChange = { taskTitle = it },
+                        label = { Text("Görev Başlığı") },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Surface,
+                            unfocusedContainerColor = Surface,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (uiState.categories.isNotEmpty()) {
+                        Text("Kategori Seç", style = AppTypography.labelSmall, color = TextSecondary)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.categories.forEach { category ->
+                                val isSelected = selectedCategory?.id == category.id
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isSelected) Color(category.colorHex.replace("#", "FF").toLong(16).toInt()) else Color(0xFF222222))
+                                        .clickable { selectedCategory = category }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = category.name,
+                                        style = AppTypography.labelSmall,
+                                        color = if (isSelected) Color.White else TextSecondary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        if (taskTitle.isNotBlank()) {
+                            viewModel.addQuickTask(taskTitle, selectedCategory?.id)
+                            showQuickAddDialog = false
+                        }
+                    }
+                ) {
+                    Text("Ekle", color = Accent)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showQuickAddDialog = false }) {
+                    Text("İptal", color = TextSecondary)
+                }
+            },
+            containerColor = Surface
+        )
     }
 }
 }
@@ -258,6 +345,178 @@ fun SectionHeader(title: String, onActionClick: () -> Unit) {
         Text(title, style = AppTypography.titleMedium)
         TextButton(onClick = onActionClick) {
             Text("Tümü", style = AppTypography.labelMedium, color = Accent)
+        }
+    }
+}
+
+@Composable
+fun DailyAIQuoteCard() {
+    val quotes = remember {
+        listOf(
+            "Kahve hazırsa başlayalım kral, yoksa ben senin yerine ertelemeye devam ederim. ☕",
+            "Bugün yapacağın her görev, gelecekteki 'tembel sen' için büyük bir iyiliktir! 😉",
+            "Biliyor musun? Bugün hedeflerini tamamlaman için harika bir gün. Tabii üşenmezsen... 🚀",
+            "Başarı, bugün yapman gerekenleri yarına bırakmamakla başlar. Ama yine de sen bilirsin. 🤷",
+            "Telefonu yavaşça yere bırak ve listedeki ilk göreve dokun. Sana inanıyorum! (ciddiyim) 👀",
+            "Plan yapmak harika bir şeydir, ancak onları uygulamak daha da harikadır. Hadi göster kendini! 💪",
+            "Asistanın bugün enerjik! Senden de aynı performansı bekliyorum, yoksa akşam raporu sert olur! 😈"
+        )
+    }
+    val randomQuote = remember { quotes.random() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(Color(0xFF2A1C5C), Color(0xFF161033))
+                )
+            )
+            .border(1.dp, Color(0xFF4A3494), RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        Column {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("🧠 Günün Asistan Sözü", style = AppTypography.labelMedium, color = Accent)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "\"$randomQuote\"",
+                style = AppTypography.bodyMedium,
+                color = TextPrimary,
+                fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+            )
+        }
+    }
+}
+
+@Composable
+fun AiBatteryCard(percentage: Int) {
+    val statusText = when {
+        percentage == 0 -> "Daha motoru çalıştırmadık... Asistanın esniyor. 😴"
+        percentage <= 30 -> "Isınıyoruz, ama hâlâ uykulu gibisin. Biraz gayret! ☕"
+        percentage <= 70 -> "Fena değil! Asistanın şu an senden gurur duyuyor. ⚡"
+        percentage < 100 -> "Neredeyse kusursuz bir gün! Az kaldı şampiyon. 🔥"
+        else -> "Efsanevi gün! Batarya %100 dolu, şimdi git ve dinlen! 👑"
+    }
+
+    val batteryColor = when {
+        percentage <= 20 -> PriorityHigh
+        percentage <= 60 -> Color(0xFFFFB000)
+        else -> Color(0xFF2ECC71)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(20.dp))
+            .background(Surface)
+            .border(1.dp, BorderColor, RoundedCornerShape(20.dp))
+            .padding(16.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("ASİSTAN ENERJİSİ", style = AppTypography.labelMedium, color = TextSecondary)
+            Text("%$percentage", style = AppTypography.titleMedium, color = batteryColor, fontWeight = FontWeight.Bold)
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        
+        // Battery visual
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(16.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(Color(0xFF222222))
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(fraction = percentage / 100f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(batteryColor)
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(statusText, style = AppTypography.bodySmall, color = TextPrimary)
+    }
+}
+
+@Composable
+fun QuickActionsGrid(
+    onNavigateToVoice: () -> Unit,
+    onNavigateToTasks: () -> Unit,
+    onAddQuickTask: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 8.dp)
+    ) {
+        Text("HIZLI EYLEMLER", style = AppTypography.labelMedium, color = TextSecondary, modifier = Modifier.padding(bottom = 8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Action 1: Voice Command
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Surface)
+                    .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
+                    .clickable { onNavigateToVoice() }
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🎙️", style = AppTypography.titleLarge)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Konuş", style = AppTypography.labelMedium, color = TextPrimary)
+                }
+            }
+
+            // Action 2: Go to Tasks
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Surface)
+                    .border(1.dp, BorderColor, RoundedCornerShape(16.dp))
+                    .clickable { onNavigateToTasks() }
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("📅", style = AppTypography.titleLarge)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Görevler", style = AppTypography.labelMedium, color = TextPrimary)
+                }
+            }
+
+            // Action 3: Quick Add Task
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color(0xFF1E1A3C))
+                    .border(1.dp, Color(0xFF3D3270), RoundedCornerShape(16.dp))
+                    .clickable { onAddQuickTask() }
+                    .padding(12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("⚡", style = AppTypography.titleLarge)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Hızlı Ekle", style = AppTypography.labelMedium, color = Accent)
+                }
+            }
         }
     }
 }
