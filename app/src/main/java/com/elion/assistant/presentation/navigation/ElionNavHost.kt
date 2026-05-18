@@ -45,12 +45,12 @@ fun ElionNavHost() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF111111))
+                        .navigationBarsPadding()
                 ) {
                     HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
                             .padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically

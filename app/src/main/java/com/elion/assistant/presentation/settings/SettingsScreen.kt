@@ -63,19 +63,31 @@ fun SettingsScreen(
     val presetColors = listOf("#4A90D9", "#7B68EE", "#2ECC71", "#F39C12", "#E74C3C", "#9E9E9E", "#8B5CF6", "#EC4899")
     var selectedColor by remember { mutableStateOf(presetColors.first()) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Ayarlar", style = AppTypography.headlineMedium) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Primary)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Primary)
+            .statusBarsPadding()
+    ) {
+        // Custom Top Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Ayarlar",
+                style = AppTypography.headlineMedium,
+                color = TextPrimary
             )
-        },
-        containerColor = Primary
-    ) { padding ->
+        }
+
+        // Scrollable Content
         Column(
             modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(scrollState)
                 .padding(horizontal = 20.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -367,7 +379,7 @@ fun SettingsScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(100.dp)) // Alt boşluk
+            Spacer(modifier = Modifier.height(160.dp)) // Alt boşluk
         }
     }
 
