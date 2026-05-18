@@ -34,38 +34,40 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Row {
-                        Text("EL", style = AppTypography.headlineMedium)
-                        Text("ION", style = AppTypography.headlineMedium, color = Accent)
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* notification settings */ }) {
-                        Icon(Icons.Default.Notifications, "Bildirimler")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Primary)
-            )
-        },
-        containerColor = Primary
-    ) { padding ->
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Primary)
+            .statusBarsPadding()
+    ) {
+        // Custom Top Bar
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row {
+                Text("EL", style = AppTypography.headlineMedium, color = TextPrimary)
+                Text("ION", style = AppTypography.headlineMedium, color = Accent)
+            }
+            IconButton(onClick = { /* notification settings */ }) {
+                Icon(Icons.Default.Notifications, "Bildirimler", tint = TextPrimary)
+            }
+        }
+
         if (uiState.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Accent)
             }
-            return@Scaffold
-        }
-
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
-            contentPadding = PaddingValues(bottom = 120.dp)
-        ) {
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 120.dp)
+            ) {
             item {
                 BriefingCard(uiState.briefingMessage)
             }
@@ -123,6 +125,7 @@ fun HomeScreen(
             }
         }
     }
+}
 }
 
 @Composable
