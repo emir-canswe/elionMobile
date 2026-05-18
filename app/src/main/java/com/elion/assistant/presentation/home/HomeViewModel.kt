@@ -109,7 +109,7 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             val task = Task(
                 title = title,
-                categoryId = categoryId,
+                categoryId = categoryId ?: 1L,
                 dueDate = LocalDate.now(),
                 createdAt = java.time.LocalDateTime.now()
             )
