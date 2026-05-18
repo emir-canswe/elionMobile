@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <string name="add_task">Görev Ekle</string>
+    <string name="all_tasks">Tümü</string>
+    <string name="app_name">ELION</string>
+    <string name="assistant_name">ELION</string>
+    <string name="assistant_name_default">ELION</string>
+    <string name="cancel">İptal</string>
+    <string name="category">Kategori</string>
+    <string name="completed">Tamamlandı</string>
+    <string name="completed_tasks">Tamamlananlar</string>
+    <string name="confirm">Onayla</string>
+    <string name="days">gün</string>
+    <string name="delete">Sil</string>
+    <string name="description_task">Açıklama (isteğe bağlı)</string>
+    <string name="due_date">Son Tarih</string>
+    <string name="evening_analysis">Akşam Analizi</string>
+    <string name="good_morning">Günaydın</string>
+    <string name="longest_streak">en uzun</string>
+    <string name="morning_briefing">Sabah Brifing</string>
+    <string name="nav_home">Ana</string>
+    <string name="nav_settings">Ayarlar</string>
+    <string name="nav_stats">İstatistik</string>
+    <string name="nav_tasks">Görevler</string>
+    <string name="notification_channel_evening">Akşam Analizi</string>
+    <string name="notification_channel_morning">Sabah Brifing</string>
+    <string name="notification_channel_postpone">Erteleme Uyarısı</string>
+    <string name="notification_channel_reminder">Görev Hatırlatıcı</string>
+    <string name="postpone_detector">Erteleme Dedektörü</string>
+    <string name="priority">Öncelik</string>
+    <string name="recurring">Tekrarlayan</string>
+    <string name="save">Kaydet</string>
+    <string name="settings_reset_confirm">Tüm veriler silinecek. Emin misiniz?</string>
+    <string name="settings_reset_title">Verileri Sıfırla</string>
+    <string name="streak_label">mevcut streak</string>
+    <string name="this_week">Bu Hafta</string>
+    <string name="title_task">Başlık</string>
+    <string name="today">Bugün</string>
+    <string name="voice_command">Sesli Komut</string>
+    <style name="Theme.Elion" parent="android:Theme.DeviceDefault.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" ns1:targetApi="o_mr1">false</item>
+    </style>
+    <style name="Theme.Elion.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#0D0D0D</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">400</item>
+        <item name="postSplashScreenTheme">@style/Theme.Elion</item>
+    </style>
+</resources>
