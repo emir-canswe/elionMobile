@@ -106,10 +106,14 @@ fun HomeScreen(
                 }
             } else {
                 items(uiState.todayTasks, key = { it.id }) { task ->
+                    val category = uiState.categories.find { it.id == task.categoryId }
                     TaskCard(
                         task = task,
                         onCompleteToggle = { viewModel.toggleTaskCompletion(task) },
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp)
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp),
+                        categoryName = category?.name,
+                        categoryColorHex = category?.colorHex,
+                        onDelete = { viewModel.deleteTask(task) }
                     )
                 }
             }

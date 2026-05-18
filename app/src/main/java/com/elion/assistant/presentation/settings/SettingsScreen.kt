@@ -23,10 +23,14 @@ import com.elion.assistant.ui.theme.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Label
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,6 +56,12 @@ fun SettingsScreen(
     var eveningMinStr by remember { mutableStateOf(uiState.eveningMinute.toString().padStart(2, '0')) }
 
     var showResetDialog by remember { mutableStateOf(false) }
+
+    val categories by viewModel.categories.collectAsState()
+    var showCategoryDialog by remember { mutableStateOf(false) }
+    var newCatName by remember { mutableStateOf("") }
+    val presetColors = listOf("#4A90D9", "#7B68EE", "#2ECC71", "#F39C12", "#E74C3C", "#9E9E9E", "#8B5CF6", "#EC4899")
+    var selectedColor by remember { mutableStateOf(presetColors.first()) }
 
     Scaffold(
         topBar = {
@@ -268,6 +278,36 @@ fun SettingsScreen(
                         color = Accent
                     )
                 }
+            }
+
+            Text("KATEGORİLER", style = AppTypography.labelMedium, modifier = Modifier.padding(top = 8.dp, start = 4.dp))
+
+            // Kategorileri Düzenle Kartı
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Surface)
+                    .border(1.dp, BorderColor, RoundedCornerShape(20.dp))
+                    .clickable { showCategoryDialog = true }
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Accent.copy(alpha = 0.1f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Label, contentDescription = null, tint = Accent, modifier = Modifier.size(18.dp))
+                }
+                Spacer(modifier = Modifier.width(12.dp))
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Kategorileri Düzenle", style = AppTypography.bodyLarge)
+                    Text("Görev kategorilerini özelleştirin", style = AppTypography.bodySmall)
+                }
+                Text("Yönet 🏷️", style = AppTypography.labelSmall, color = TextSecondary)
             }
 
             Text("GÜVENLİK VE VERİ", style = AppTypography.labelMedium, modifier = Modifier.padding(top = 8.dp, start = 4.dp))
@@ -505,6 +545,128 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
                     Text("İptal", color = TextSecondary)
+                }
+            }
+        )
+    }
+
+    if (showCategoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showCategoryDialog = false },
+            containerColor = Surface,
+            titleContentColor = TextPrimary,
+            title = { Text("Kategorileri Yönet", style = AppTypography.titleLarge) },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Category List
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(categories) { cat ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF222233))
+                                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(16.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(android.graphics.Color.parseColor(cat.colorHex)))
+                                    )
+                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Text(cat.name, style = AppTypography.bodyMedium, color = TextPrimary)
+                                }
+                                if (!cat.isDefault) {
+                                    IconButton(
+                                        onClick = { viewModel.deleteCategory(cat) },
+                                        modifier = Modifier.size(24.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = "Sil",
+                                            tint = PriorityHigh,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                } else {
+                                    Text("Varsayılan", style = AppTypography.labelSmall, color = TextSecondary)
+                                }
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = BorderColor)
+
+                    // Add New Category Section
+                    Text("Yeni Kategori Ekle", style = AppTypography.labelMedium, color = Accent)
+                    
+                    OutlinedTextField(
+                        value = newCatName,
+                        onValueChange = { newCatName = it },
+                        label = { Text("Kategori Adı", color = TextSecondary) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary,
+                            focusedBorderColor = Accent,
+                            unfocusedBorderColor = BorderColor
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    // Color presets row
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        presetColors.forEach { colorHex ->
+                            val isSelected = selectedColor == colorHex
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(android.graphics.Color.parseColor(colorHex)))
+                                    .border(
+                                        width = if (isSelected) 3.dp else 0.dp,
+                                        color = if (isSelected) Color.White else Color.Transparent,
+                                        shape = CircleShape
+                                    )
+                                    .clickable { selectedColor = colorHex }
+                            )
+                        }
+                    }
+
+                    Button(
+                        onClick = {
+                            if (newCatName.isNotBlank()) {
+                                viewModel.addCategory(newCatName, selectedColor)
+                                newCatName = ""
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Accent),
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = newCatName.isNotBlank()
+                    ) {
+                        Text("Kategori Ekle", color = Color.White)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCategoryDialog = false }) {
+                    Text("Kapat", color = Accent)
                 }
             }
         )

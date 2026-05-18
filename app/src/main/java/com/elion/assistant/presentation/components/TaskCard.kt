@@ -9,9 +9,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -29,9 +32,19 @@ import java.time.LocalDate
 fun TaskCard(
     task: Task,
     onCompleteToggle: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    categoryName: String? = null,
+    categoryColorHex: String? = null,
+    onDelete: (() -> Unit)? = null
 ) {
     val isOverdue = task.dueDate != null && task.dueDate.isBefore(LocalDate.now()) && !task.isCompleted
+    val parsedColor = remember(categoryColorHex) {
+        try {
+            Color(android.graphics.Color.parseColor(categoryColorHex ?: "#4A90D9"))
+        } catch (e: Exception) {
+            Accent
+        }
+    }
     
     Row(
         modifier = modifier
@@ -80,20 +93,20 @@ fun TaskCard(
             Spacer(modifier = Modifier.height(4.dp))
             
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Mock Category tag
-                Box(
-                    modifier = Modifier
-                        .background(CategoryWorkBg, RoundedCornerShape(20.dp))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
-                ) {
-                    Text(
-                        text = "İş", // Simplified for now
-                        style = AppTypography.labelSmall,
-                        color = CategoryWork
-                    )
+                if (categoryName != null) {
+                    Box(
+                        modifier = Modifier
+                            .background(parsedColor.copy(alpha = 0.15f), RoundedCornerShape(20.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = categoryName,
+                            style = AppTypography.labelSmall,
+                            color = parsedColor
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
-                
-                Spacer(modifier = Modifier.width(8.dp))
                 
                 if (isOverdue) {
                     Icon(
@@ -119,6 +132,21 @@ fun TaskCard(
         }
         
         Spacer(modifier = Modifier.width(12.dp))
+
+        if (onDelete != null) {
+            IconButton(
+                onClick = { onDelete() },
+                modifier = Modifier.size(28.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Sil",
+                    tint = PriorityHigh,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+        }
         
         // Priority dot
         Box(

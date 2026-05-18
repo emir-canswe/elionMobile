@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.elion.assistant.data.local.database.AppDatabase
 import com.elion.assistant.data.local.preferences.AppPreferences
+import com.elion.assistant.domain.model.Category
+import com.elion.assistant.domain.repository.CategoryRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -26,7 +28,8 @@ data class SettingsUiState(
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val prefs: AppPreferences,
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val timeFlow = combine(
@@ -54,6 +57,9 @@ class SettingsViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SettingsUiState())
 
+    val categories: StateFlow<List<Category>> = categoryRepository.getAllCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     fun updateAssistantName(name: String) {
         viewModelScope.launch { prefs.setAssistantName(name) }
     }
@@ -78,10 +84,37 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { prefs.setCommentTone(tone) }
     }
 
+    fun addCategory(name: String, colorHex: String) {
+        viewModelScope.launch {
+            categoryRepository.insertCategory(
+                Category(
+                    name = name,
+                    colorHex = colorHex,
+                    iconName = "label",
+                    isDefault = false,
+                    sortOrder = 10
+                )
+            )
+        }
+    }
+
+    fun updateCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.updateCategory(category)
+        }
+    }
+
+    fun deleteCategory(category: Category) {
+        viewModelScope.launch {
+            categoryRepository.deleteCategory(category)
+        }
+    }
+
     fun resetAllData() {
         viewModelScope.launch {
             database.clearAllTables()
             prefs.clearAll()
+            categoryRepository.seedDefaultCategories()
         }
     }
 }

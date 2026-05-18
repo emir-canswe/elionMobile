@@ -7,6 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AccessTime
@@ -102,9 +105,13 @@ fun TasksScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(uiState.tasks, key = { it.id }) { task ->
+                        val category = uiState.categories.find { it.id == task.categoryId }
                         TaskCard(
                             task = task,
-                            onCompleteToggle = { viewModel.completeTask(task) }
+                            onCompleteToggle = { viewModel.completeTask(task) },
+                            categoryName = category?.name,
+                            categoryColorHex = category?.colorHex,
+                            onDelete = { viewModel.deleteTask(task) }
                         )
                     }
                 }
@@ -113,6 +120,11 @@ fun TasksScreen(
         
         if (showAddDialog) {
             var taskTitle by remember { mutableStateOf("") }
+            var taskDescription by remember { mutableStateOf("") }
+            var selectedCategoryId by remember(uiState.categories) { mutableStateOf(uiState.categories.firstOrNull()?.id ?: 1L) }
+            var isRecurring by remember { mutableStateOf(false) }
+            var selectedRecurringType by remember { mutableStateOf(com.elion.assistant.domain.model.RecurringType.DAILY) }
+
             var selectedPriority by remember { mutableStateOf(Priority.NORMAL) }
             var selectedDayOffset by remember { mutableStateOf(0) } // 0 = Bugün, 1 = Yarın, 3 = 3 Gün Sonra
             var showTimePicker by remember { mutableStateOf(false) }
@@ -194,7 +206,9 @@ fun TasksScreen(
                 title = { Text("Yeni Görev Oluştur", style = AppTypography.titleLarge) },
                 text = {
                     Column(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         OutlinedTextField(
@@ -212,6 +226,98 @@ fun TasksScreen(
                             ),
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        OutlinedTextField(
+                            value = taskDescription,
+                            onValueChange = { taskDescription = it },
+                            label = { Text("Açıklama (İsteğe Bağlı)", color = TextSecondary) },
+                            textStyle = AppTypography.bodyMedium,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Accent,
+                                unfocusedBorderColor = BorderColor,
+                                focusedLabelColor = Accent,
+                                cursorColor = Accent,
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text("Kategori", style = AppTypography.labelMedium, color = TextSecondary)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.categories.forEach { cat ->
+                                val isSelected = selectedCategoryId == cat.id
+                                val parsedColor = remember(cat.colorHex) {
+                                    try {
+                                        Color(android.graphics.Color.parseColor(cat.colorHex))
+                                    } catch (e: Exception) {
+                                        Accent
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) parsedColor else Color(0xFF222233))
+                                        .clickable { selectedCategoryId = cat.id }
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = cat.name,
+                                        style = AppTypography.labelSmall,
+                                        color = if (isSelected) Color.White else TextSecondary
+                                    )
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text("Tekrarlayan Görev", style = AppTypography.bodyMedium, color = TextPrimary)
+                            Switch(
+                                checked = isRecurring,
+                                onCheckedChange = { isRecurring = it },
+                                colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = Accent)
+                            )
+                        }
+
+                        if (isRecurring) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                com.elion.assistant.domain.model.RecurringType.entries.forEach { type ->
+                                    val isSelected = selectedRecurringType == type
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(if (isSelected) Accent else Color(0xFF222233))
+                                            .clickable { selectedRecurringType = type }
+                                            .padding(vertical = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = when(type) {
+                                                com.elion.assistant.domain.model.RecurringType.DAILY -> "Günlük"
+                                                com.elion.assistant.domain.model.RecurringType.WEEKLY -> "Haftalık"
+                                                com.elion.assistant.domain.model.RecurringType.MONTHLY -> "Aylık"
+                                            },
+                                            style = AppTypography.labelMedium,
+                                            color = if (isSelected) Color.White else TextSecondary
+                                        )
+                                    }
+                                }
+                            }
+                        }
 
                         Text("Öncelik", style = AppTypography.labelMedium, color = TextSecondary)
                         Row(
@@ -303,6 +409,10 @@ fun TasksScreen(
                                 viewModel.addTask(
                                     Task(
                                         title = taskTitle,
+                                        description = taskDescription.ifBlank { null },
+                                        categoryId = selectedCategoryId,
+                                        isRecurring = isRecurring,
+                                        recurringType = if (isRecurring) selectedRecurringType else null,
                                         priority = selectedPriority,
                                         dueDate = LocalDate.now().plusDays(selectedDayOffset.toLong()),
                                         dueTime = selectedTime

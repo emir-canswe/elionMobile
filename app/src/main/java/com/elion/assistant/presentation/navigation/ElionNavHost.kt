@@ -38,49 +38,55 @@ fun ElionNavHost() {
     val currentDestination = navBackStackEntry?.destination
 
     Scaffold(
+        containerColor = Primary,
         bottomBar = {
             if (currentDestination?.route != "voice") {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(Color(0xFF111111))
-                        .border(1.dp, Color(0xFF1E1E1E))
-                        .navigationBarsPadding()
-                        .padding(vertical = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val currentRoute = currentDestination?.route
-                    val navigate = { route: String ->
-                        navController.navigate(route) {
-                            popUpTo("home") { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                    
-                    NavItem("home", "Ana", Icons.Default.Home, currentRoute, navigate)
-                    NavItem("tasks", "Görevler", Icons.Default.List, currentRoute, navigate)
-                    
-                    // Ortalanmış ve aynı hizada Sesli Komut Butonu
-                    Box(
+                    HorizontalDivider(color = Color(0xFF1E1E1E), thickness = 1.dp)
+                    Row(
                         modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .background(Accent)
-                            .clickable { navController.navigate("voice") },
-                        contentAlignment = Alignment.Center
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(vertical = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Mic, 
-                            contentDescription = "Sesli Komut", 
-                            tint = Color.White, 
-                            modifier = Modifier.size(32.dp)
-                        )
+                        val currentRoute = currentDestination?.route
+                        val navigate = { route: String ->
+                            navController.navigate(route) {
+                                popUpTo("home") { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                        
+                        NavItem("home", "Ana", Icons.Default.Home, currentRoute, navigate)
+                        NavItem("tasks", "Görevler", Icons.Default.List, currentRoute, navigate)
+                        
+                        // Ortalanmış ve aynı hizada Sesli Komut Butonu
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .clip(CircleShape)
+                                .background(Accent)
+                                .clickable { navController.navigate("voice") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic, 
+                                contentDescription = "Sesli Komut", 
+                                tint = Color.White, 
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                        
+                        NavItem("stats", "İstatistik", Icons.Default.BarChart, currentRoute, navigate)
+                        NavItem("settings", "Ayarlar", Icons.Default.Settings, currentRoute, navigate)
                     }
-                    
-                    NavItem("stats", "İstatistik", Icons.Default.BarChart, currentRoute, navigate)
-                    NavItem("settings", "Ayarlar", Icons.Default.Settings, currentRoute, navigate)
                 }
             }
         }
