@@ -12,6 +12,10 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import com.elion.assistant.service.notification.WorkScheduler
+
 enum class TaskFilter {
     TODAY, WEEK, ALL, COMPLETED
 }
@@ -26,7 +30,8 @@ data class TasksUiState(
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val taskRepository: TaskRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(TaskFilter.TODAY)
@@ -68,19 +73,31 @@ class TasksViewModel @Inject constructor(
 
     fun addTask(task: Task) {
         viewModelScope.launch {
-            taskRepository.insertTask(task)
+            val taskId = taskRepository.insertTask(task)
+            if (task.dueDate != null && task.dueTime != null) {
+                WorkScheduler.scheduleTaskReminder(
+                    context = context,
+                    taskId = taskId,
+                    title = task.title,
+                    description = task.description ?: "",
+                    dueDate = task.dueDate,
+                    dueTime = task.dueTime
+                )
+            }
         }
     }
 
     fun completeTask(task: Task) {
         viewModelScope.launch {
             taskRepository.completeTask(task.id)
+            WorkScheduler.cancelTaskReminder(context, task.id)
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
             taskRepository.deleteTask(task)
+            WorkScheduler.cancelTaskReminder(context, task.id)
         }
     }
 }

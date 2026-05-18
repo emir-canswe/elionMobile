@@ -61,4 +61,42 @@ object WorkScheduler {
     fun cancelAll(context: Context) {
         WorkManager.getInstance(context).cancelAllWork()
     }
+
+    fun scheduleTaskReminder(
+        context: Context,
+        taskId: Long,
+        title: String,
+        description: String,
+        dueDate: java.time.LocalDate,
+        dueTime: java.time.LocalTime
+    ) {
+        val workManager = WorkManager.getInstance(context)
+        val targetDateTime = dueDate.atTime(dueTime)
+        val now = LocalDateTime.now()
+        
+        if (targetDateTime.isBefore(now)) return
+        
+        val initialDelay = Duration.between(now, targetDateTime).toMillis()
+        
+        val data = workDataOf(
+            "task_title" to title,
+            "task_description" to description
+        )
+        
+        val reminderWork = OneTimeWorkRequestBuilder<TaskReminderWorker>()
+            .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+            .setInputData(data)
+            .addTag("task_reminder_$taskId")
+            .build()
+            
+        workManager.enqueueUniqueWork(
+            "task_reminder_$taskId",
+            ExistingWorkPolicy.REPLACE,
+            reminderWork
+        )
+    }
+
+    fun cancelTaskReminder(context: Context, taskId: Long) {
+        WorkManager.getInstance(context).cancelUniqueWork("task_reminder_$taskId")
+    }
 }

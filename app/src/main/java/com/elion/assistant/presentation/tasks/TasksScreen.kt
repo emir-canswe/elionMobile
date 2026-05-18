@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -114,6 +115,76 @@ fun TasksScreen(
             var taskTitle by remember { mutableStateOf("") }
             var selectedPriority by remember { mutableStateOf(Priority.NORMAL) }
             var selectedDayOffset by remember { mutableStateOf(0) } // 0 = Bugün, 1 = Yarın, 3 = 3 Gün Sonra
+            var showTimePicker by remember { mutableStateOf(false) }
+            var hourStr by remember { mutableStateOf("") }
+            var minuteStr by remember { mutableStateOf("") }
+            var selectedTime by remember { mutableStateOf<java.time.LocalTime?>(null) }
+
+            if (showTimePicker) {
+                AlertDialog(
+                    onDismissRequest = { showTimePicker = false },
+                    containerColor = Surface,
+                    titleContentColor = TextPrimary,
+                    title = { Text("Hatırlatıcı Saati Seç", style = AppTypography.titleLarge) },
+                    text = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            OutlinedTextField(
+                                value = hourStr,
+                                onValueChange = { if (it.length <= 2 && it.all { char -> char.isDigit() }) hourStr = it },
+                                label = { Text("Saat", color = TextSecondary) },
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Accent,
+                                    unfocusedBorderColor = BorderColor,
+                                    focusedLabelColor = Accent,
+                                    cursorColor = Accent,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary
+                                )
+                            )
+                            Text(":", style = AppTypography.titleLarge, color = TextPrimary)
+                            OutlinedTextField(
+                                value = minuteStr,
+                                onValueChange = { if (it.length <= 2 && it.all { char -> char.isDigit() }) minuteStr = it },
+                                label = { Text("Dakika", color = TextSecondary) },
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Accent,
+                                    unfocusedBorderColor = BorderColor,
+                                    focusedLabelColor = Accent,
+                                    cursorColor = Accent,
+                                    focusedTextColor = TextPrimary,
+                                    unfocusedTextColor = TextPrimary
+                                )
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                val hr = hourStr.toIntOrNull() ?: 12
+                                val mn = minuteStr.toIntOrNull() ?: 0
+                                if (hr in 0..23 && mn in 0..59) {
+                                    selectedTime = java.time.LocalTime.of(hr, mn)
+                                    showTimePicker = false
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Accent)
+                        ) {
+                            Text("Seç", color = Color.White)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showTimePicker = false }) {
+                            Text("İptal", color = TextSecondary)
+                        }
+                    }
+                )
+            }
 
             AlertDialog(
                 onDismissRequest = { showAddDialog = false },
@@ -200,6 +271,29 @@ fun TasksScreen(
                                 }
                             }
                         }
+
+                        Text("Hatırlatıcı Saati", style = AppTypography.labelMedium, color = TextSecondary)
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xFF222233))
+                                .clickable { showTimePicker = true }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = selectedTime?.toString() ?: "Saat Seçilmedi (Hatırlatma Kapalı)",
+                                style = AppTypography.bodyMedium,
+                                color = if (selectedTime != null) Accent else TextSecondary
+                            )
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                tint = TextSecondary
+                            )
+                        }
                     }
                 },
                 confirmButton = {
@@ -210,7 +304,8 @@ fun TasksScreen(
                                     Task(
                                         title = taskTitle,
                                         priority = selectedPriority,
-                                        dueDate = LocalDate.now().plusDays(selectedDayOffset.toLong())
+                                        dueDate = LocalDate.now().plusDays(selectedDayOffset.toLong()),
+                                        dueTime = selectedTime
                                     )
                                 )
                                 showAddDialog = false
